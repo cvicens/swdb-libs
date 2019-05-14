@@ -13,7 +13,7 @@ def call(pipeParams) {
 
     pipeline {
         agent {
-            label "${jenkinsEnv.BUILD_AGENT}"
+            label "${pipeParams.BUILD_AGENT}"
         }
 
         parameters {
