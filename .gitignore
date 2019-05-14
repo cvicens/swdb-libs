@@ -1,0 +1,12 @@
+.gradle/
+build/
+reports/
+gradle.properties
+#
+# idea specific paths
+#
+.idea
+out
+*.iml
+*.iws
+*.ipr

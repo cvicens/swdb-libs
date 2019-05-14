@@ -1,0 +1,36 @@
+buildscript {
+    ext {
+        cicdToolsRepo = "http://lx64905.sbcore.net:8081/artifactory/Migration_Current_VR"
+    }
+    repositories {
+        mavenLocal()
+        maven { url cicdToolsRepo }
+        ivy { url cicdToolsRepo }
+    }
+    dependencies {
+        classpath ('com.swedbank.tools.gradle.plugin:swedb-release-plugin:0.1.0')
+    }
+}
+
+apply plugin: 'tools.swedbank.gradle.plugin.releaseplugin'
+
+sourceSets {
+    main {
+        groovy {
+            srcDirs = ['src', 'vars']
+        }
+    }
+    test {
+        groovy {
+            srcDirs = ['test/groovy']
+        }
+    }
+}
+
+repositories {
+    addAll(buildscript.repositories)
+}
+
+dependencies {
+    compile 'org.codehaus.groovy:groovy-all:2.4.12'
+}
