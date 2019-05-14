@@ -1,29 +1,19 @@
 def call(pipeParams) {
-
-    assert pipeParams.get('BUILD_AGENT') != null
     assert pipeParams.get('RELEASE_BRANCH', 'master') != null
     assert pipeParams.get('REPO_TYPE', 'ivy') != null
-    assert pipeParams.get('ARTIFACTORY_URL') != null
     assert pipeParams.get('ARTIFACTORY_REPO_DEV') != null
     assert pipeParams.get('ARTIFACTORY_REPO_RELEASE') != null
+    assert pipeParams.get('BUILD_AGENT') != null
+    assert pipeParams.get('ARTIFACTORY_URL_DEV') != null
+    assert pipeParams.get('ARTIFACTORY_URL_RELEASE') != null
     assert pipeParams.get('CRED_ARTIFACTORY_RW_DEV') != null
     assert pipeParams.get('CRED_ARTIFACTORY_RW_RELEASE') != null
     assert pipeParams.get('CRED_BITBUCKET_SSH_KEY') != null
-
-    // input example
-    // [BUILD_AGENT: 'build-agent',
-    //  RELEASE_BRANCH: 'master',
-    //  REPO_TYPE: 'ivy',
-    //  ARTIFACTORY_URL: 'https://lx64905.sbcore.net:8443/artifactory',
-    //  ARTIFACTORY_REPO_DEV: 'migration-development-local',
-    //  ARTIFACTORY_REPO_RELEASE: 'migration-development-local',
-    //  CRED_ARTIFACTORY_RW_DEV: 'c2e0ed7b-c8ff-4781-8106-623d449524b7',
-    //  CRED_ARTIFACTORY_RW_RELEASE: 'c2e0ed7b-c8ff-4781-8106-623d449524b7',
-    //  CRED_BITBUCKET_SSH_KEY: '9dd8e07e-a963-4f6d-9050-c86282e4520f']
+    println("Pipeline input arguments: \n" + pipeParams)
 
     pipeline {
         agent {
-            label "${pipeParams.BUILD_AGENT}"
+            label "${jenkinsEnv.BUILD_AGENT}"
         }
 
         parameters {
@@ -84,7 +74,7 @@ def call(pipeParams) {
             stage("Dev release") {
                 when { not { branch "$pipeParams.RELEASE_BRANCH" } }
                 environment {
-                    ARTIFACTORY_PUBLISH_REPO = "${pipeParams.ARTIFACTORY_URL}/${pipeParams.ARTIFACTORY_REPO_DEV}"
+                    ARTIFACTORY_PUBLISH_REPO = "${pipeParams.ARTIFACTORY_URL_DEV}/${pipeParams.ARTIFACTORY_REPO_DEV}"
                     ARTIFACTORY_RW_USER = credentials("${pipeParams.CRED_ARTIFACTORY_RW_DEV}")
                 }
 
@@ -104,7 +94,7 @@ def call(pipeParams) {
             stage("Release release") {
                 when { branch "$pipeParams.RELEASE_BRANCH" }
                 environment {
-                    ARTIFACTORY_PUBLISH_REPO = "${pipeParams.ARTIFACTORY_URL}/${pipeParams.ARTIFACTORY_REPO_RELEASE}"
+                    ARTIFACTORY_PUBLISH_REPO = "${pipeParams.ARTIFACTORY_URL_RELEASE}/${pipeParams.ARTIFACTORY_REPO_RELEASE}"
                     ARTIFACTORY_RW_USER = credentials("${pipeParams.CRED_ARTIFACTORY_RW_RELEASE}")
                 }
 
