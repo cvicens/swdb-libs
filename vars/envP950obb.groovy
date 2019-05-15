@@ -1,7 +1,8 @@
 def call() {
     return envBaseParams() + [
             BUILD_AGENT: 'build-agent',
-            REPO_TYPE: 'ivy',
+            REPO_TYPE_DEV: 'ivy',
+            REPO_TYPE_RELEASE: 'ivy',
             ARTIFACTORY_URL_DEV: 'https://lx64905.sbcore.net:8443/artifactory',
             ARTIFACTORY_URL_RELEASE: 'https://lx64905.sbcore.net:8443/artifactory',
             ARTIFACTORY_REPO_DEV: 'migration-development-local',

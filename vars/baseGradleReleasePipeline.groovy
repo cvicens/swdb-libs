@@ -1,6 +1,7 @@
 def call(pipeParams) {
     assert pipeParams.get('RELEASE_BRANCH', 'master') != null
-    assert pipeParams.get('REPO_TYPE', 'ivy') != null
+    assert pipeParams.get('REPO_TYPE_DEV', 'ivy') != null
+    assert pipeParams.get('REPO_TYPE_RELEASE', 'ivy') != null
     assert pipeParams.get('ARTIFACTORY_REPO_DEV') != null
     assert pipeParams.get('ARTIFACTORY_REPO_RELEASE') != null
     assert pipeParams.get('BUILD_AGENT') != null
@@ -82,7 +83,7 @@ def call(pipeParams) {
                     sh "./gradlew" +
                             " -Dorg.ajoberstar.grgit.auth.ssh.private=${env.BITBUCKET_SSH_KEY}" +
                             " -Dorg.ajoberstar.grgit.auth.session.config.StrictHostKeyChecking=no" +
-                            " -PpublishRepoType=${pipeParams.REPO_TYPE}" +
+                            " -PpublishRepoType=${pipeParams.REPO_TYPE_DEV}" +
                             " -PpublishRepoURL=${env.ARTIFACTORY_PUBLISH_REPO}" +
                             " -PpublishPassword=${env.ARTIFACTORY_RW_USER_PSW}" +
                             " -PpublishUsername=${env.ARTIFACTORY_RW_USER_USR}" +
@@ -104,7 +105,7 @@ def call(pipeParams) {
                         sh "./gradlew" +
                                 " -Dorg.ajoberstar.grgit.auth.ssh.private=${env.BITBUCKET_SSH_KEY}" +
                                 " -Dorg.ajoberstar.grgit.auth.session.config.StrictHostKeyChecking=no" +
-                                " -PpublishRepoType=${pipeParams.REPO_TYPE}" +
+                                " -PpublishRepoType=${pipeParams.REPO_TYPE_RELEASE}" +
                                 " -PpublishRepoURL=${env.ARTIFACTORY_PUBLISH_REPO}" +
                                 " -PpublishPassword=${env.ARTIFACTORY_RW_USER_PSW}" +
                                 " -PpublishUsername=${env.ARTIFACTORY_RW_USER_USR}" +
