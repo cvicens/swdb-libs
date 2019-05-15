@@ -3,11 +3,12 @@ def call() {
             BUILD_AGENT: 'build-agent',
             REPO_TYPE: 'ivy',
             ARTIFACTORY_URL_DEV: 'https://lx64905.sbcore.net:8443/artifactory',
-            ARTIFACTORY_URL_RELEASE: 'https://lx64905.sbcore.net:8443/artifactory',
             ARTIFACTORY_REPO_DEV: 'migration-development-local',
+            CRED_ARTIFACTORY_RW_DEV: '05965f62-807a-4eb3-9905-a1dbf9e10cd3',
+
+            ARTIFACTORY_URL_RELEASE: 'https://lx64905.sbcore.net:8443/artifactory',
             ARTIFACTORY_REPO_RELEASE: 'migration-development-local',
-            CRED_ARTIFACTORY_RW_DEV: 'c2e0ed7b-c8ff-4781-8106-623d449524b7',
-            CRED_ARTIFACTORY_RW_RELEASE: 'c2e0ed7b-c8ff-4781-8106-623d449524b7',
-            CRED_BITBUCKET_SSH_KEY: '9dd8e07e-a963-4f6d-9050-c86282e4520f',
+            CRED_ARTIFACTORY_RW_RELEASE: '05965f62-807a-4eb3-9905-a1dbf9e10cd3',
+            CRED_BITBUCKET_SSH_KEY: '081bd26a-f63e-4e79-9ccb-f6efdad85f3e',
     ]
 }
