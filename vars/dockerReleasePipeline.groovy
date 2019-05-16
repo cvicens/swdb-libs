@@ -1,14 +1,6 @@
 def call(pipeParams) {
     assert pipeParams.get('RELEASE_BRANCH', 'master') != null
-    assert pipeParams.get('REPO_TYPE_DEV', 'ivy') != null
-    assert pipeParams.get('REPO_TYPE_RELEASE', 'ivy') != null
-    assert pipeParams.get('ARTIFACTORY_REPO_DEV') != null
-    assert pipeParams.get('ARTIFACTORY_REPO_RELEASE') != null
     assert pipeParams.get('BUILD_AGENT') != null
-    assert pipeParams.get('ARTIFACTORY_URL_DEV') != null
-    assert pipeParams.get('ARTIFACTORY_URL_RELEASE') != null
-    assert pipeParams.get('CRED_ARTIFACTORY_RW_DEV') != null
-    assert pipeParams.get('CRED_ARTIFACTORY_RW_RELEASE') != null
     assert pipeParams.get('CRED_BITBUCKET_SSH_KEY') != null
     println("Pipeline input arguments: \n" + pipeParams)
 
@@ -26,6 +18,7 @@ def call(pipeParams) {
         environment {
             PIPELINE_NAME = "${env.JOB_NAME}"
             BITBUCKET_SSH_KEY = credentials("${pipeParams.CRED_BITBUCKET_SSH_KEY}")
+            REGISTRY = 'docker-swedbank.lx64905.sbcore.net'
         }
 
         options {
@@ -67,37 +60,26 @@ def call(pipeParams) {
                 post {
                     always {
                         junit allowEmptyResults: true,
-                              testResults: 'build/test-results/**/*.xml'
+                                testResults: 'build/test-results/**/*.xml'
                     }
                 }
             }
 
-            stage("Dev release") {
+            stage("Dev release jar") {
                 when { not { branch "$pipeParams.RELEASE_BRANCH" } }
-                environment {
-                    ARTIFACTORY_PUBLISH_REPO = "${pipeParams.ARTIFACTORY_URL_DEV}/${pipeParams.ARTIFACTORY_REPO_DEV}"
-                    ARTIFACTORY_RW_USER = credentials("${pipeParams.CRED_ARTIFACTORY_RW_DEV}")
-                }
 
                 steps {
                     sh "./gradlew" +
                             " -Dorg.ajoberstar.grgit.auth.ssh.private=${env.BITBUCKET_SSH_KEY}" +
                             " -Dorg.ajoberstar.grgit.auth.session.config.StrictHostKeyChecking=no" +
-                            " -PpublishRepoType=${pipeParams.REPO_TYPE_DEV}" +
-                            " -PpublishRepoURL=${env.ARTIFACTORY_PUBLISH_REPO}" +
-                            " -PpublishPassword=${env.ARTIFACTORY_RW_USER_PSW}" +
-                            " -PpublishUsername=${env.ARTIFACTORY_RW_USER_USR}" +
+                            " -PskipRepoPublishing=true" +
                             " --stacktrace" +
                             " devSnapshot"
                 }
             }
 
-            stage("Release release") {
+            stage("Release release jar") {
                 when { branch "$pipeParams.RELEASE_BRANCH" }
-                environment {
-                    ARTIFACTORY_PUBLISH_REPO = "${pipeParams.ARTIFACTORY_URL_RELEASE}/${pipeParams.ARTIFACTORY_REPO_RELEASE}"
-                    ARTIFACTORY_RW_USER = credentials("${pipeParams.CRED_ARTIFACTORY_RW_RELEASE}")
-                }
 
                 steps {
                     script {
@@ -105,14 +87,26 @@ def call(pipeParams) {
                         sh "./gradlew" +
                                 " -Dorg.ajoberstar.grgit.auth.ssh.private=${env.BITBUCKET_SSH_KEY}" +
                                 " -Dorg.ajoberstar.grgit.auth.session.config.StrictHostKeyChecking=no" +
-                                " -PpublishRepoType=${pipeParams.REPO_TYPE_RELEASE}" +
-                                " -PpublishRepoURL=${env.ARTIFACTORY_PUBLISH_REPO}" +
-                                " -PpublishPassword=${env.ARTIFACTORY_RW_USER_PSW}" +
-                                " -PpublishUsername=${env.ARTIFACTORY_RW_USER_USR}" +
+                                " -PskipRepoPublishing=true" +
                                 " --stacktrace" +
                                 "${versionParam}" +
                                 " final"
                     }
+                }
+            }
+
+            stage("Publish to docker") {
+                steps {
+                    sh '''
+                        export PROJECT_NAME=`(gradle properties -q | grep "name:" | awk '{print $2}')`
+                        export VERSION=`ls build/libs/*.jar | sed -r 's/.*\${PROJECT_NAME}-(.*).jar/\\1/\'`
+                        echo $PROJECT_NAME
+                        echo $VERSION
+                        
+                        docker build \
+                            -t $REGISTRY/\$PROJECT_NAME:\$VERSION .
+                        docket image push $REGISTRY/\$PROJECT_NAME:\$VERSION
+                    '''
                 }
             }
         }
