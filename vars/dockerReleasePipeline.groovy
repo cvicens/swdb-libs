@@ -2,6 +2,7 @@ def call(pipeParams) {
     assert pipeParams.get('RELEASE_BRANCH', 'master') != null
     assert pipeParams.get('BUILD_AGENT') != null
     assert pipeParams.get('CRED_BITBUCKET_SSH_KEY') != null
+    assert pipeParams.get('DOCKER_REGISTRY') != null
     println("Pipeline input arguments: \n" + pipeParams)
 
     pipeline {
@@ -18,7 +19,6 @@ def call(pipeParams) {
         environment {
             PIPELINE_NAME = "${env.JOB_NAME}"
             BITBUCKET_SSH_KEY = credentials("${pipeParams.CRED_BITBUCKET_SSH_KEY}")
-            REGISTRY = 'docker-swedbank.lx64905.sbcore.net'
         }
 
         options {
@@ -95,17 +95,19 @@ def call(pipeParams) {
                 }
             }
 
-            stage("Publish to docker") {
+            stage("Publish to docker registry") {
+                environment {
+                    REGISTRY = "${pipeParams.DOCKER_REGISTRY}"
+                }
                 steps {
                     sh '''
-                        export PROJECT_NAME=`(gradle properties -q | grep "name:" | awk '{print $2}')`
-                        export VERSION=`ls build/libs/*.jar | sed -r 's/.*\${PROJECT_NAME}-(.*).jar/\\1/\'`
-                        echo $PROJECT_NAME
-                        echo $VERSION
+                        export PROJECT_NAME=`(./gradlew properties -q | grep "name:" | awk '{print \$2}')`
+                        export VERSION=`(ls build/libs/*.jar | sed -r "s/.*\$PROJECT_NAME-(.*).jar/\\1/" | sed 's/[^a-zA-Z0-9\\.\\_\\-]//g')`
+                        echo \$PROJECT_NAME
+                        echo \$VERSION
                         
-                        docker build \
-                            -t $REGISTRY/\$PROJECT_NAME:\$VERSION .
-                        docket image push $REGISTRY/\$PROJECT_NAME:\$VERSION
+                        docker build . -t $REGISTRY/\$PROJECT_NAME:\$VERSION
+                        docker image push $REGISTRY/\$PROJECT_NAME:\$VERSION
                     '''
                 }
             }

@@ -12,5 +12,8 @@ def call() {
             ARTIFACTORY_REPO_RELEASE: 'core-services',
             CRED_ARTIFACTORY_RW_RELEASE: 'cb8e052b-439c-4a5b-afc2-b84a88063c95',
             CRED_BITBUCKET_SSH_KEY: '081bd26a-f63e-4e79-9ccb-f6efdad85f3e',
+
+            // docker params
+            DOCKER_REGISTRY: 'docker-swedbank.lx64905.sbcore.net'
     ]
 }
