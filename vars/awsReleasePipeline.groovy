@@ -2,7 +2,10 @@ def call(pipeParams) {
     assert pipeParams.get('RELEASE_BRANCH', 'master') != null
     assert pipeParams.get('BUILD_AGENT') != null
     assert pipeParams.get('CRED_BITBUCKET_SSH_KEY') != null
-    assert pipeParams.get('DOCKER_REGISTRY') != null
+    assert pipeParams.get('AWS_CREDENTIALS') != null
+    assert pipeParams.get('AWS_REGION') != null
+    assert pipeParams.get('ECR_REGISTRY') != null
+    assert pipeParams.get('PROXY_USER_CREDS') != null
     println("Pipeline input arguments: \n" + pipeParams)
 
     pipeline {
@@ -95,16 +98,49 @@ def call(pipeParams) {
                 }
             }
 
-            stage("Publish to docker registry") {
+            stage("Publish image RELEASE") {
+                when { branch "$pipeParams.RELEASE_BRANCH" }
                 environment {
-                    AWS_ID = credentials("66679ec8-b7d9-4da2-a8e0-619fbc0dc03f")
+                    AWS_ID = credentials(env.AWS_CREDENTIALS)
                     AWS_ACCESS_KEY_ID = "${env.AWS_ID_USR}"
                     AWS_SECRET_ACCESS_KEY = "${env.AWS_ID_PSW}"
-                    //REGISTRY = "${pipeParams.DOCKER_REGISTRY}"
-                    AWS_DEFAULT_REGION = 'eu-north-1'
-                    AWS_REGION = 'eu-north-1'
-                    REGISTRY = "851194376578.dkr.ecr.${env.AWS_REGION}.amazonaws.com/core-services-dev"
-                    PROXY_CREDS=credentials('c5d62d01-367d-4b9b-9698-e29d45782e3d')
+                    AWS_DEFAULT_REGION = "${pipeParams.AWS_REGION}"
+                    AWS_REGION = "${pipeParams.AWS_REGION}"
+                    REGISTRY = ${pipeParams.ECR_REGISTRY}
+                    PROXY_CREDS=credentials(pipeParams.PROXY_USER_CREDS)
+                    http_proxy="http://$PROXY_CREDS@proxyvip.foreningssparbanken.se:8080/"
+                    https_proxy="http://$PROXY_CREDS@proxyvip.foreningssparbanken.se:8080/"
+                    no_proxy='localhost,127.0.0.1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,.sbcore.net,.swedbank.net'
+                }
+
+                steps {
+                    sh '''
+                        export PROJECT_NAME=`(./gradlew properties -q | grep "name:" | awk '{print \$2}')`
+                        export VERSION=`(ls build/libs/*.jar | sed -r "s/.*\$PROJECT_NAME-(.*).jar/\\1/" | sed 's/[^a-zA-Z0-9\\.\\_\\-]//g')`
+                       
+                        # get login
+                        \$(aws ecr get-login --no-include-email --no-verify-ssl --region ${AWS_REGION}) 
+                        
+                        # build
+                        docker build -t $REGISTRY/\$PROJECT_NAME:\$VERSION 
+                                     -t $REGISTRY/\$PROJECT_NAME:latest .
+                        
+                        # push
+                        docker image push $REGISTRY/\$PROJECT_NAME:\$VERSION
+                        docker image push $REGISTRY/\$PROJECT_NAME:latest
+                    '''
+                }
+            }
+            stage("Publish image DEV") {
+                when { not { branch "$pipeParams.RELEASE_BRANCH" } }
+                environment {
+                    AWS_ID = credentials(env.AWS_CREDENTIALS)
+                    AWS_ACCESS_KEY_ID = "${env.AWS_ID_USR}"
+                    AWS_SECRET_ACCESS_KEY = "${env.AWS_ID_PSW}"
+                    AWS_DEFAULT_REGION = "${pipeParams.AWS_REGION}"
+                    AWS_REGION = "${pipeParams.AWS_REGION}"
+                    REGISTRY = ${pipeParams.ECR_REGISTRY}
+                    PROXY_CREDS=credentials(pipeParams.PROXY_USER_CREDS)
                     http_proxy="http://$PROXY_CREDS@proxyvip.foreningssparbanken.se:8080/"
                     https_proxy="http://$PROXY_CREDS@proxyvip.foreningssparbanken.se:8080/"
                     no_proxy='localhost,127.0.0.1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,.sbcore.net,.swedbank.net'
@@ -113,14 +149,14 @@ def call(pipeParams) {
                     sh '''
                         export PROJECT_NAME=`(./gradlew properties -q | grep "name:" | awk '{print \$2}')`
                         export VERSION=`(ls build/libs/*.jar | sed -r "s/.*\$PROJECT_NAME-(.*).jar/\\1/" | sed 's/[^a-zA-Z0-9\\.\\_\\-]//g')`
-                        echo \$PROJECT_NAME
-                        echo \$VERSION
-                        
+                       
                         # get login
                         \$(aws ecr get-login --no-include-email --no-verify-ssl --region ${AWS_REGION}) 
                         
                         # build
-                        docker build . -t $REGISTRY/\$PROJECT_NAME:\$VERSION
+                        docker build -t $REGISTRY/\$PROJECT_NAME:\$VERSION .
+                        
+                        # push
                         docker image push $REGISTRY/\$PROJECT_NAME:\$VERSION
                     '''
                 }
