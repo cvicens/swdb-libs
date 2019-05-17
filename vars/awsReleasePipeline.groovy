@@ -101,7 +101,7 @@ def call(pipeParams) {
             stage("Publish image RELEASE") {
                 when { branch "$pipeParams.RELEASE_BRANCH" }
                 environment {
-                    AWS_ID = credentials("${env.AWS_CREDENTIALS}")
+                    AWS_ID = credentials("${pipeParams.AWS_CREDENTIALS}")
                     AWS_ACCESS_KEY_ID = "${env.AWS_ID_USR}"
                     AWS_SECRET_ACCESS_KEY = "${env.AWS_ID_PSW}"
                     AWS_DEFAULT_REGION = "${pipeParams.AWS_REGION}"
@@ -134,7 +134,7 @@ def call(pipeParams) {
             stage("Publish image DEV") {
                 when { not { branch "$pipeParams.RELEASE_BRANCH" } }
                 environment {
-                    AWS_ID = credentials("${env.AWS_CREDENTIALS}")
+                    AWS_ID = credentials("${pipeParams.AWS_CREDENTIALS}")
                     AWS_ACCESS_KEY_ID = "${env.AWS_ID_USR}"
                     AWS_SECRET_ACCESS_KEY = "${env.AWS_ID_PSW}"
                     AWS_DEFAULT_REGION = "${pipeParams.AWS_REGION}"
