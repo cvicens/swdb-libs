@@ -103,7 +103,7 @@ def call(pipeParams) {
                     //REGISTRY = "${pipeParams.DOCKER_REGISTRY}"
                     AWS_DEFAULT_REGION = 'eu-north-1'
                     AWS_REGION = 'eu-north-1'
-                    REGISTRY = "851194376578.dkr.ecr.${env.REGION}.amazonaws.com/core-services-dev"
+                    REGISTRY = "851194376578.dkr.ecr.${env.AWS_REGION}.amazonaws.com/core-services-dev"
                     PROXY_CREDS=credentials('c5d62d01-367d-4b9b-9698-e29d45782e3d')
                     http_proxy="http://$PROXY_CREDS@proxyvip.foreningssparbanken.se:8080/"
                     https_proxy="http://$PROXY_CREDS@proxyvip.foreningssparbanken.se:8080/"
