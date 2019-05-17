@@ -101,13 +101,13 @@ def call(pipeParams) {
             stage("Publish image RELEASE") {
                 when { branch "$pipeParams.RELEASE_BRANCH" }
                 environment {
-                    AWS_ID = credentials(env.AWS_CREDENTIALS)
+                    AWS_ID = credentials("${env.AWS_CREDENTIALS}")
                     AWS_ACCESS_KEY_ID = "${env.AWS_ID_USR}"
                     AWS_SECRET_ACCESS_KEY = "${env.AWS_ID_PSW}"
                     AWS_DEFAULT_REGION = "${pipeParams.AWS_REGION}"
                     AWS_REGION = "${pipeParams.AWS_REGION}"
-                    REGISTRY = ${pipeParams.ECR_REGISTRY}
-                    PROXY_CREDS=credentials(pipeParams.PROXY_USER_CREDS)
+                    REGISTRY = "${pipeParams.ECR_REGISTRY}"
+                    PROXY_CREDS=credentials("${pipeParams.PROXY_USER_CREDS}")
                     http_proxy="http://$PROXY_CREDS@proxyvip.foreningssparbanken.se:8080/"
                     https_proxy="http://$PROXY_CREDS@proxyvip.foreningssparbanken.se:8080/"
                     no_proxy='localhost,127.0.0.1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,.sbcore.net,.swedbank.net'
@@ -134,13 +134,13 @@ def call(pipeParams) {
             stage("Publish image DEV") {
                 when { not { branch "$pipeParams.RELEASE_BRANCH" } }
                 environment {
-                    AWS_ID = credentials(env.AWS_CREDENTIALS)
+                    AWS_ID = credentials("${env.AWS_CREDENTIALS}")
                     AWS_ACCESS_KEY_ID = "${env.AWS_ID_USR}"
                     AWS_SECRET_ACCESS_KEY = "${env.AWS_ID_PSW}"
                     AWS_DEFAULT_REGION = "${pipeParams.AWS_REGION}"
                     AWS_REGION = "${pipeParams.AWS_REGION}"
-                    REGISTRY = ${pipeParams.ECR_REGISTRY}
-                    PROXY_CREDS=credentials(pipeParams.PROXY_USER_CREDS)
+                    REGISTRY = "${pipeParams.ECR_REGISTRY}"
+                    PROXY_CREDS=credentials("${pipeParams.PROXY_USER_CREDS}")
                     http_proxy="http://$PROXY_CREDS@proxyvip.foreningssparbanken.se:8080/"
                     https_proxy="http://$PROXY_CREDS@proxyvip.foreningssparbanken.se:8080/"
                     no_proxy='localhost,127.0.0.1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,.sbcore.net,.swedbank.net'
