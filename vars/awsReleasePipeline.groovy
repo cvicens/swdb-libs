@@ -134,6 +134,7 @@ def call(pipeParams) {
             stage("Publish image DEV") {
                 when { not { branch "$pipeParams.RELEASE_BRANCH" } }
                 environment {
+                    IMAGE_PREFIX = "prdev"
                     AWS_ID = credentials("${pipeParams.AWS_CREDENTIALS}")
                     AWS_ACCESS_KEY_ID = "${env.AWS_ID_USR}"
                     AWS_SECRET_ACCESS_KEY = "${env.AWS_ID_PSW}"
@@ -148,7 +149,7 @@ def call(pipeParams) {
                 steps {
                     sh '''
                         export PROJECT_NAME=`(./gradlew properties -q | grep "name:" | awk '{print \$2}')`
-                        export VERSION=`(ls build/libs/*.jar | sed -r "s/.*\$PROJECT_NAME-(.*).jar/\\1/" | sed 's/[^a-zA-Z0-9\\.\\_\\-]//g')`
+                        export VERSION=${IMAGE_PREFIX}-`(ls build/libs/*.jar | sed -r "s/.*\$PROJECT_NAME-(.*).jar/\\1/" | sed 's/[^a-zA-Z0-9\\.\\_\\-]//g')`
                        
                         # get login
                         \$(aws ecr get-login --no-include-email --no-verify-ssl --region ${AWS_REGION}) 
