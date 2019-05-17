@@ -97,7 +97,17 @@ def call(pipeParams) {
 
             stage("Publish to docker registry") {
                 environment {
-                    REGISTRY = "${pipeParams.DOCKER_REGISTRY}"
+                    AWS_ID = credentials("66679ec8-b7d9-4da2-a8e0-619fbc0dc03f")
+                    AWS_ACCESS_KEY_ID = "${env.AWS_ID_USR}"
+                    AWS_SECRET_ACCESS_KEY = "${env.AWS_ID_PSW}"
+                    //REGISTRY = "${pipeParams.DOCKER_REGISTRY}"
+                    AWS_DEFAULT_REGION = 'eu-north-1'
+                    AWS_REGION = 'eu-north-1'
+                    REGISTRY = "851194376578.dkr.ecr.${env.REGION}.amazonaws.com/core-services-dev"
+                    PROXY_CREDS=credentials('c5d62d01-367d-4b9b-9698-e29d45782e3d')
+                    http_proxy="http://$PROXY_CREDS@proxyvip.foreningssparbanken.se:8080/"
+                    https_proxy="http://$PROXY_CREDS@proxyvip.foreningssparbanken.se:8080/"
+                    no_proxy='localhost,127.0.0.1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,.sbcore.net,.swedbank.net'
                 }
                 steps {
                     sh '''
@@ -106,6 +116,10 @@ def call(pipeParams) {
                         echo \$PROJECT_NAME
                         echo \$VERSION
                         
+                        # get login
+                        \$(aws ecr get-login --no-include-email --no-ssl-verify --region ${AWS_REGION}) 
+                        
+                        # build
                         docker build . -t $REGISTRY/\$PROJECT_NAME:\$VERSION
                         docker image push $REGISTRY/\$PROJECT_NAME:\$VERSION
                     '''
