@@ -122,7 +122,7 @@ def call(pipeParams) {
                         \$(aws ecr get-login --no-include-email --no-verify-ssl --region ${AWS_REGION}) 
                         
                         # build
-                        docker build -t $REGISTRY/\$PROJECT_NAME:\$VERSION 
+                        docker build -t $REGISTRY/\$PROJECT_NAME:\$VERSION \
                                      -t $REGISTRY/\$PROJECT_NAME:latest .
                         
                         # push
