@@ -17,6 +17,7 @@ def call(pipeParams) {
             string(name: 'OVERRIDE_VERSION',
                     defaultValue: '',
                     description: 'Override release version (only for release branches). Should be in format X.Y.Z (e.g. 1.2.3)')
+            string(name: 'AWS_REGION', defaultValue: "${pipeParams.get('AWS_REGION')}")
         }
 
         environment {
@@ -104,8 +105,8 @@ def call(pipeParams) {
                     AWS_ID = credentials("${pipeParams.AWS_CREDENTIALS}")
                     AWS_ACCESS_KEY_ID = "${env.AWS_ID_USR}"
                     AWS_SECRET_ACCESS_KEY = "${env.AWS_ID_PSW}"
-                    AWS_DEFAULT_REGION = "${pipeParams.AWS_REGION}"
-                    AWS_REGION = "${pipeParams.AWS_REGION}"
+                    AWS_DEFAULT_REGION = "${params.AWS_REGION}"
+                    AWS_REGION = "${params.AWS_REGION}"
                     REGISTRY = "${pipeParams.ECR_REGISTRY}"
                     PROXY_CREDS=credentials("${pipeParams.PROXY_USER_CREDS}")
                     http_proxy="http://$PROXY_CREDS@proxyvip.foreningssparbanken.se:8080/"
@@ -138,8 +139,8 @@ def call(pipeParams) {
                     AWS_ID = credentials("${pipeParams.AWS_CREDENTIALS}")
                     AWS_ACCESS_KEY_ID = "${env.AWS_ID_USR}"
                     AWS_SECRET_ACCESS_KEY = "${env.AWS_ID_PSW}"
-                    AWS_DEFAULT_REGION = "${pipeParams.AWS_REGION}"
-                    AWS_REGION = "${pipeParams.AWS_REGION}"
+                    AWS_DEFAULT_REGION = "${params.AWS_REGION}"
+                    AWS_REGION = "${params.AWS_REGION}"
                     REGISTRY = "${pipeParams.ECR_REGISTRY}"
                     PROXY_CREDS=credentials("${pipeParams.PROXY_USER_CREDS}")
                     http_proxy="http://$PROXY_CREDS@proxyvip.foreningssparbanken.se:8080/"

@@ -15,8 +15,8 @@ def call() {
 
             // docker params
             AWS_CREDENTIALS: '66679ec8-b7d9-4da2-a8e0-619fbc0dc03f',
-            AWS_REGION: 'eu-north-1',
-            ECR_REGISTRY: '851194376578.dkr.ecr.eu-north-1.amazonaws.com',
+            AWS_REGION: 'eu-west-1',
+            ECR_REGISTRY: '851194376578.dkr.ecr.eu-west-1.amazonaws.com',
             PROXY_USER_CREDS: 'c5d62d01-367d-4b9b-9698-e29d45782e3d'
     ]
 }
