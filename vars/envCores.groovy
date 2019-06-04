@@ -14,9 +14,9 @@ def call() {
             CRED_BITBUCKET_SSH_KEY: '081bd26a-f63e-4e79-9ccb-f6efdad85f3e',
 
             // docker params
-            AWS_CREDENTIALS: '66679ec8-b7d9-4da2-a8e0-619fbc0dc03f',
+            AWS_CREDENTIALS: 'c2624c2e-f7f5-4d9d-a363-925163980d6b',
             AWS_REGION: 'eu-west-1',
-            ECR_REGISTRY: '851194376578.dkr.ecr.eu-west-1.amazonaws.com',
+            ECR_REGISTRY: '971220085003.dkr.ecr.eu-west-1.amazonaws.com',
             PROXY_USER_CREDS: 'c5d62d01-367d-4b9b-9698-e29d45782e3d'
     ]
 }
