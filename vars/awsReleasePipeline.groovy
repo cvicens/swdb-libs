@@ -52,6 +52,7 @@ def call(pipeParams) {
                         env.GIT_COMMIT = sh(returnStdout: true, script: 'git rev-parse HEAD').trim()
                         bitbucketHandler.notifyBuildStart displayName: env.PIPELINE_NAME,
                                 displayMessage: 'Build started'
+                        sh 'chmod +x gradlew'
                         sh './gradlew -v'
                     }
                 }
