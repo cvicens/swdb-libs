@@ -11,7 +11,7 @@ def call() {
             REPO_TYPE_RELEASE: 'ivy',
             ARTIFACTORY_URL_RELEASE: 'http://repo1.swedbank.net:8081/artifactory',
             ARTIFACTORY_REPO_RELEASE: 'core-services',
-            CRED_ARTIFACTORY_RW_RELEASE: 'cb8e052b-439c-4a5b-afc2-b84a88063c95',
+            CRED_ARTIFACTORY_RW_RELEASE: '05965f62-807a-4eb3-9905-a1dbf9e10cd3',
             CRED_BITBUCKET_SSH_KEY: '081bd26a-f63e-4e79-9ccb-f6efdad85f3e',
 
             // docker params
