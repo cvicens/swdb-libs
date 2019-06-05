@@ -8,11 +8,12 @@ buildscript {
         ivy { url cicdToolsRepo }
     }
     dependencies {
-        classpath ('com.swedbank.tools.gradle.plugin:swedb-release-plugin:0.1.0')
+        classpath ('com.swedbank.tools.gradle.plugin:swedb-release-plugin:0.1.5')
     }
 }
 
 apply plugin: 'tools.swedbank.gradle.plugin.releaseplugin'
+apply plugin: 'nebula.maven-publish'
 
 sourceSets {
     main {

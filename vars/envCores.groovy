@@ -8,10 +8,10 @@ def call() {
             CRED_ARTIFACTORY_RW_DEV: '05965f62-807a-4eb3-9905-a1dbf9e10cd3',
 
             // TODO: check why maven publishing does not work!
-            REPO_TYPE_RELEASE: 'ivy',
+            REPO_TYPE_RELEASE: 'maven',
             ARTIFACTORY_URL_RELEASE: 'http://repo1.swedbank.net:8081/artifactory',
             ARTIFACTORY_REPO_RELEASE: 'core-services',
-            CRED_ARTIFACTORY_RW_RELEASE: '05965f62-807a-4eb3-9905-a1dbf9e10cd3',
+            CRED_ARTIFACTORY_RW_RELEASE: '437ea3bc-7f44-4c16-b30a-100635658515',
             CRED_BITBUCKET_SSH_KEY: '081bd26a-f63e-4e79-9ccb-f6efdad85f3e',
 
             // docker params
