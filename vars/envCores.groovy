@@ -18,6 +18,10 @@ def call() {
             AWS_CREDENTIALS: 'c2624c2e-f7f5-4d9d-a363-925163980d6b',
             AWS_REGION: 'eu-west-1',
             ECR_REGISTRY: '971220085003.dkr.ecr.eu-west-1.amazonaws.com',
-            PROXY_USER_CREDS: 'c5d62d01-367d-4b9b-9698-e29d45782e3d'
+            PROXY_USER_CREDS: 'c5d62d01-367d-4b9b-9698-e29d45782e3d',
+
+            // helm params
+            HELM_REPO_NAME: 'andromeda-charts',
+            HELM_REPO_URL: 's3://andromeda-helm-charts/charts'
     ]
 }

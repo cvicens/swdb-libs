@@ -17,12 +17,22 @@ def call(pipeParams) {
             string(name: 'OVERRIDE_VERSION',
                     defaultValue: '',
                     description: 'Override release version (only for release branches). Should be in format X.Y.Z (e.g. 1.2.3)')
+            booleanParam(name: 'PUSH_DOCKER_IMAGE', defaultValue: true, description: 'Indicates whether the docker image should be pushed to the registry.')
+            // parameters from the input map
             string(name: 'AWS_REGION', defaultValue: "${pipeParams.get('AWS_REGION')}")
+            string(name: 'RELEASE_BRANCH', defaultValue: "${pipeParams.get('RELEASE_BRANCH')}")
+            string(name: 'BUILD_AGENT', defaultValue: "${pipeParams.get('BUILD_AGENT')}")
+            string(name: 'CRED_BITBUCKET_SSH_KEY', defaultValue: "${pipeParams.get('CRED_BITBUCKET_SSH_KEY')}")
+            string(name: 'AWS_CREDENTIALS', defaultValue: "${pipeParams.get('AWS_CREDENTIALS')}")
+            string(name: 'ECR_REGISTRY', defaultValue: "${pipeParams.get('ECR_REGISTRY')}")
+            string(name: 'PROXY_USER_CREDS', defaultValue: "${pipeParams.get('PROXY_USER_CREDS')}")
+            string(name: 'HELM_REPO_NAME', defaultValue: "${pipeParams.get('HELM_REPO_NAME')}")
+            string(name: 'HELM_REPO_URL', defaultValue: "${pipeParams.get('HELM_REPO_URL')}")
         }
 
         environment {
             PIPELINE_NAME = "${env.JOB_NAME}"
-            BITBUCKET_SSH_KEY = credentials("${pipeParams.CRED_BITBUCKET_SSH_KEY}")
+            BITBUCKET_SSH_KEY = credentials("${params.CRED_BITBUCKET_SSH_KEY}")
         }
 
         options {
@@ -72,7 +82,7 @@ def call(pipeParams) {
             }
 
             stage("Dev release jar") {
-                when { not { branch "$pipeParams.RELEASE_BRANCH" } }
+                when { not { branch "${params.RELEASE_BRANCH}" } }
 
                 steps {
                     sh "./gradlew" +
@@ -85,7 +95,7 @@ def call(pipeParams) {
             }
 
             stage("Release release jar") {
-                when { branch "$pipeParams.RELEASE_BRANCH" }
+                when { branch "${params.RELEASE_BRANCH}" }
 
                 steps {
                     script {
@@ -101,68 +111,116 @@ def call(pipeParams) {
                 }
             }
 
-            stage("Publish image RELEASE") {
-                when { branch "$pipeParams.RELEASE_BRANCH" }
+            stage("Publish K8s Master") {
+                when { branch "${params.RELEASE_BRANCH}" }
                 environment {
-                    AWS_ID = credentials("${pipeParams.AWS_CREDENTIALS}")
+                    AWS_ID = credentials("${params.AWS_CREDENTIALS}")
                     AWS_ACCESS_KEY_ID = "${env.AWS_ID_USR}"
                     AWS_SECRET_ACCESS_KEY = "${env.AWS_ID_PSW}"
                     AWS_DEFAULT_REGION = "${params.AWS_REGION}"
                     AWS_REGION = "${params.AWS_REGION}"
-                    REGISTRY = "${pipeParams.ECR_REGISTRY}"
-                    PROXY_CREDS=credentials("${pipeParams.PROXY_USER_CREDS}")
+                    DOCKER_REGISTRY = "${params.ECR_REGISTRY}"
+                    PROXY_CREDS=credentials("${params.PROXY_USER_CREDS}")
                     http_proxy="http://$PROXY_CREDS@proxyvip.foreningssparbanken.se:8080/"
                     https_proxy="http://$PROXY_CREDS@proxyvip.foreningssparbanken.se:8080/"
                     no_proxy='localhost,127.0.0.1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,.sbcore.net,.swedbank.net'
+                    HELM_REPO_URL = "${params.HELM_REPO_URL}"
+                    HELM_REPO_NAME = "${params.HELM_REPO_NAME}"
+                    GRADLE_PROJECT_NAME = utilsGradleGetProjectName()
+                    VERSION=sh(script: "ls build/libs/*.jar | sed -r 's/.*${GRADLE_PROJECT_NAME}-(.*).jar/\\1/' | sed 's/[^a-zA-Z0-9\\.\\_\\-]//g'", returnStdout: true).trim()
                 }
+                stages {
+                    stage("Publish docker image") {
+                        steps {
+                            script {
+                                utilsAwsBuildPublishDockerImage name: "${DOCKER_REGISTRY}/${GRADLE_PROJECT_NAME}",
+                                        tags: ["${VERSION}", 'latest'],
+                                        awsRegion: "${AWS_REGION}"
+                            }
+                        }
+                    }
 
-                steps {
-                    sh '''
-                        export PROJECT_NAME=`(./gradlew properties -q | grep "name:" | awk '{print \$2}')`
-                        export VERSION=`(ls build/libs/*.jar | sed -r "s/.*\$PROJECT_NAME-(.*).jar/\\1/" | sed 's/[^a-zA-Z0-9\\.\\_\\-]//g')`
-                       
-                        # get login
-                        \$(aws ecr get-login --no-include-email --no-verify-ssl --region ${AWS_REGION}) 
-                        
-                        # build
-                        docker build -t $REGISTRY/\$PROJECT_NAME:\$VERSION \
-                                     -t $REGISTRY/\$PROJECT_NAME:latest .
-                        
-                        # push
-                        docker image push $REGISTRY/\$PROJECT_NAME:\$VERSION
-                        docker image push $REGISTRY/\$PROJECT_NAME:latest
-                    '''
+                    stage("Install helm chart") {
+                        steps {
+                            script {
+                                def chartBasePath = "./kubernetes"
+                                def chartName = sh(script: "ls -1 ${chartBasePath} | head -n 1", returnStdout: true).trim()
+
+                                def packagePath = utilsHelmCreatePackage chartPath: "${chartBasePath}/${chartName}",
+                                        version: "${env.VERSION}"
+
+                                utilsHelmPublishChartToRepo repoName: "${HELM_REPO_NAME}",
+                                        repoUrl: "${HELM_REPO_URL}",
+                                        chartPackagePath: "${packagePath}"
+
+                                def chartNamespace = 'default'
+                                utilsHelmInstallChart awsRegion: "${AWS_REGION}",
+                                        eksClusterName: "core-cluster",
+                                        repoName: "${HELM_REPO_NAME}",
+                                        chartName: "${chartName}",
+                                        chartVersion: "${env.VERSION}",
+                                        chartNamespace: "${chartNamespace}",
+                                        releaseName: "prod-${env.VERSION}"
+                            }
+                        }
+                    }
                 }
             }
-            stage("Publish image DEV") {
-                when { not { branch "$pipeParams.RELEASE_BRANCH" } }
+
+            stage("Publish K8s Dev") {
+                when { not { branch "${params.RELEASE_BRANCH}" } }
                 environment {
-                    IMAGE_PREFIX = "prdev"
-                    AWS_ID = credentials("${pipeParams.AWS_CREDENTIALS}")
+                    AWS_ID = credentials("${params.AWS_CREDENTIALS}")
                     AWS_ACCESS_KEY_ID = "${env.AWS_ID_USR}"
                     AWS_SECRET_ACCESS_KEY = "${env.AWS_ID_PSW}"
                     AWS_DEFAULT_REGION = "${params.AWS_REGION}"
                     AWS_REGION = "${params.AWS_REGION}"
-                    REGISTRY = "${pipeParams.ECR_REGISTRY}"
-                    PROXY_CREDS=credentials("${pipeParams.PROXY_USER_CREDS}")
+                    DOCKER_REGISTRY = "${params.ECR_REGISTRY}"
+                    PROXY_CREDS=credentials("${params.PROXY_USER_CREDS}")
                     http_proxy="http://$PROXY_CREDS@proxyvip.foreningssparbanken.se:8080/"
                     https_proxy="http://$PROXY_CREDS@proxyvip.foreningssparbanken.se:8080/"
                     no_proxy='localhost,127.0.0.1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,.sbcore.net,.swedbank.net'
+                    HELM_REPO_URL = "${params.HELM_REPO_URL}"
+                    HELM_REPO_NAME = "${params.HELM_REPO_NAME}"
+                    GRADLE_PROJECT_NAME = utilsGradleGetProjectName()
+                    VERSION=sh(script: "ls build/libs/*.jar | sed -r 's/.*${GRADLE_PROJECT_NAME}-(.*).jar/\\1/' | sed 's/[^a-zA-Z0-9\\.\\_\\-]//g'", returnStdout: true).trim()
                 }
-                steps {
-                    sh '''
-                        export PROJECT_NAME=`(./gradlew properties -q | grep "name:" | awk '{print \$2}')`
-                        export VERSION=${IMAGE_PREFIX}-`(ls build/libs/*.jar | sed -r "s/.*\$PROJECT_NAME-(.*).jar/\\1/" | sed 's/[^a-zA-Z0-9\\.\\_\\-]//g')`
-                       
-                        # get login
-                        \$(aws ecr get-login --no-include-email --no-verify-ssl --region ${AWS_REGION}) 
-                        
-                        # build
-                        docker build -t $REGISTRY/\$PROJECT_NAME:\$VERSION .
-                        
-                        # push
-                        docker image push $REGISTRY/\$PROJECT_NAME:\$VERSION
-                    '''
+                stages {
+                    stage("Publish docker image") {
+                        steps {
+                            script {
+                                utilsAwsBuildPublishDockerImage name: "${DOCKER_REGISTRY}/${GRADLE_PROJECT_NAME}",
+                                        tags: ["${VERSION}"],
+                                        awsRegion: "${AWS_REGION}"
+                            }
+                        }
+                    }
+
+                    stage("Install helm chart") {
+                        steps {
+                            script {
+                                def chartBasePath = "./kubernetes"
+                                def chartName = sh(script: "ls -1 ${chartBasePath} | head -n 1", returnStdout: true).trim()
+
+                                def packagePath = utilsHelmCreatePackage chartPath: "${chartBasePath}/${chartName}",
+                                        version: "${env.VERSION}"
+
+                                utilsHelmPublishChartToRepo repoName: "${HELM_REPO_NAME}",
+                                        repoUrl: "${HELM_REPO_URL}",
+                                        chartPackagePath: "${packagePath}"
+
+                                def chartNamespace = sh(script: "echo -n 'pr-${chartName}-${env.GIT_COMMIT}' | cut -c -63",
+                                        returnStdout: true).trim()
+                                utilsHelmInstallChart awsRegion: "${AWS_REGION}",
+                                        eksClusterName: "core-cluster",
+                                        repoName: "${HELM_REPO_NAME}",
+                                        chartName: "${chartName}",
+                                        chartVersion: "${env.VERSION}",
+                                        chartNamespace: "${chartNamespace}",
+                                        releaseName: "pr-${env.GIT_COMMIT.substring(0, 5)}"
+                            }
+                        }
+                    }
                 }
             }
         }
