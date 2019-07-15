@@ -149,14 +149,16 @@ def call(pipeParams) {
                                 def packagePath = utilsHelmCreatePackage chartPath: "${chartBasePath}/${chartName}",
                                         version: "${env.VERSION}"
 
-                                utilsHelmPublishChartToRepo repoName: "${HELM_REPO_NAME}",
+                                utilsHelmSetup repoName: "${HELM_REPO_NAME}",
                                         repoUrl: "${HELM_REPO_URL}",
+                                        awsRegion: "${AWS_REGION}",
+                                        eksClusterName: "core-cluster"
+
+                                utilsHelmPublishChartToRepo repoName: "${HELM_REPO_NAME}",
                                         chartPackagePath: "${packagePath}"
 
-                                def chartNamespace = 'default'
-                                utilsHelmInstallChart awsRegion: "${AWS_REGION}",
-                                        eksClusterName: "core-cluster",
-                                        repoName: "${HELM_REPO_NAME}",
+                                def chartNamespace = "prod-${chartName}-${env.GIT_COMMIT}".substring(0,62)
+                                utilsHelmInstallChart repoName: "${HELM_REPO_NAME}",
                                         chartName: "${chartName}",
                                         chartVersion: "${env.VERSION}",
                                         chartNamespace: "${chartNamespace}",
@@ -205,15 +207,16 @@ def call(pipeParams) {
                                 def packagePath = utilsHelmCreatePackage chartPath: "${chartBasePath}/${chartName}",
                                         version: "${env.VERSION}"
 
-                                utilsHelmPublishChartToRepo repoName: "${HELM_REPO_NAME}",
+                                utilsHelmSetup repoName: "${HELM_REPO_NAME}",
                                         repoUrl: "${HELM_REPO_URL}",
+                                        awsRegion: "${AWS_REGION}",
+                                        eksClusterName: "core-cluster"
+
+                                utilsHelmPublishChartToRepo repoName: "${HELM_REPO_NAME}",
                                         chartPackagePath: "${packagePath}"
 
-                                def chartNamespace = sh(script: "echo -n 'pr-${chartName}-${env.GIT_COMMIT}' | cut -c -63",
-                                        returnStdout: true).trim()
-                                utilsHelmInstallChart awsRegion: "${AWS_REGION}",
-                                        eksClusterName: "core-cluster",
-                                        repoName: "${HELM_REPO_NAME}",
+                                def chartNamespace = "pr-${chartName}-${env.GIT_COMMIT}".substring(0,62)
+                                utilsHelmInstallChart repoName: "${HELM_REPO_NAME}",
                                         chartName: "${chartName}",
                                         chartVersion: "${env.VERSION}",
                                         chartNamespace: "${chartNamespace}",
