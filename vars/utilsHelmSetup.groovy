@@ -6,7 +6,6 @@ def call(Map params = [:]) {
 
     sh """
         aws eks --region ${awsRegion} update-kubeconfig --name ${eksClusterName}
-        helm plugin install https://github.com/hypnoglow/helm-s3.git || true
         helm repo add ${repoName} ${repoUrl}
     """
 }
