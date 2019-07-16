@@ -146,13 +146,12 @@ def call(pipeParams) {
                                 def chartBasePath = "./kubernetes"
                                 def chartName = sh(script: "ls -1 ${chartBasePath} | head -n 1", returnStdout: true).trim()
 
-                                def packagePath = utilsHelmCreatePackage chartPath: "${chartBasePath}/${chartName}",
-                                        version: "${env.VERSION}"
-
                                 utilsHelmSetup repoName: "${HELM_REPO_NAME}",
                                         repoUrl: "${HELM_REPO_URL}",
                                         awsRegion: "${AWS_REGION}",
                                         eksClusterName: "core-cluster"
+                                def packagePath = utilsHelmCreatePackage chartPath: "${chartBasePath}/${chartName}",
+                                        version: "${env.VERSION}"
 
                                 utilsHelmPublishChartToRepo repoName: "${HELM_REPO_NAME}",
                                         chartPackagePath: "${packagePath}"
@@ -204,13 +203,13 @@ def call(pipeParams) {
                                 def chartBasePath = "./kubernetes"
                                 def chartName = sh(script: "ls -1 ${chartBasePath} | head -n 1", returnStdout: true).trim()
 
-                                def packagePath = utilsHelmCreatePackage chartPath: "${chartBasePath}/${chartName}",
-                                        version: "${env.VERSION}"
-
                                 utilsHelmSetup repoName: "${HELM_REPO_NAME}",
                                         repoUrl: "${HELM_REPO_URL}",
                                         awsRegion: "${AWS_REGION}",
                                         eksClusterName: "core-cluster"
+
+                                def packagePath = utilsHelmCreatePackage chartPath: "${chartBasePath}/${chartName}",
+                                        version: "${env.VERSION}"
 
                                 utilsHelmPublishChartToRepo repoName: "${HELM_REPO_NAME}",
                                         chartPackagePath: "${packagePath}"
