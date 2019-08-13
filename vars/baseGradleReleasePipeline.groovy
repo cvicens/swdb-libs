@@ -25,7 +25,6 @@ def call(pipeParams) {
 
         environment {
             PIPELINE_NAME = "${env.JOB_NAME}"
-            BITBUCKET_SSH_KEY = credentials("${pipeParams.CRED_BITBUCKET_SSH_KEY}")
         }
 
         options {
@@ -82,15 +81,18 @@ def call(pipeParams) {
                 }
 
                 steps {
-                    sh "./gradlew" +
-                            " -Dorg.ajoberstar.grgit.auth.ssh.private=${env.BITBUCKET_SSH_KEY}" +
-                            " -Dorg.ajoberstar.grgit.auth.session.config.StrictHostKeyChecking=no" +
-                            " -PpublishRepoType=${pipeParams.REPO_TYPE_DEV}" +
-                            " -PpublishRepoURL=${env.ARTIFACTORY_PUBLISH_REPO}" +
-                            " -PpublishPassword=${env.ARTIFACTORY_RW_USER_PSW}" +
-                            " -PpublishUsername=${env.ARTIFACTORY_RW_USER_USR}" +
-                            " --stacktrace" +
-                            " devSnapshot"
+                    script {
+                        sshagent(credentials: ["${pipeParams.CRED_BITBUCKET_SSH_KEY}"]) {
+                            sh "./gradlew" +
+                                    " -Dorg.ajoberstar.grgit.auth.session.config.StrictHostKeyChecking=no" +
+                                    " -PpublishRepoType=${pipeParams.REPO_TYPE_DEV}" +
+                                    " -PpublishRepoURL=${env.ARTIFACTORY_PUBLISH_REPO}" +
+                                    " -PpublishPassword=${env.ARTIFACTORY_RW_USER_PSW}" +
+                                    " -PpublishUsername=${env.ARTIFACTORY_RW_USER_USR}" +
+                                    " --stacktrace" +
+                                    " devSnapshot"
+                        }
+                    }
                 }
             }
 
@@ -104,16 +106,17 @@ def call(pipeParams) {
                 steps {
                     script {
                         def versionParam = (params.OVERRIDE_VERSION == '') ? '' : " -Prelease.version=${params.OVERRIDE_VERSION}"
-                        sh "./gradlew" +
-                                " -Dorg.ajoberstar.grgit.auth.ssh.private=${env.BITBUCKET_SSH_KEY}" +
-                                " -Dorg.ajoberstar.grgit.auth.session.config.StrictHostKeyChecking=no" +
-                                " -PpublishRepoType=${pipeParams.REPO_TYPE_RELEASE}" +
-                                " -PpublishRepoURL=${env.ARTIFACTORY_PUBLISH_REPO}" +
-                                " -PpublishPassword=${env.ARTIFACTORY_RW_USER_PSW}" +
-                                " -PpublishUsername=${env.ARTIFACTORY_RW_USER_USR}" +
-                                " --stacktrace" +
-                                "${versionParam}" +
-                                " final"
+                        sshagent(credentials: ["${pipeParams.CRED_BITBUCKET_SSH_KEY}"]) {
+                            sh "./gradlew" +
+                                    " -Dorg.ajoberstar.grgit.auth.session.config.StrictHostKeyChecking=no" +
+                                    " -PpublishRepoType=${pipeParams.REPO_TYPE_RELEASE}" +
+                                    " -PpublishRepoURL=${env.ARTIFACTORY_PUBLISH_REPO}" +
+                                    " -PpublishPassword=${env.ARTIFACTORY_RW_USER_PSW}" +
+                                    " -PpublishUsername=${env.ARTIFACTORY_RW_USER_USR}" +
+                                    " --stacktrace" +
+                                    "${versionParam}" +
+                                    " final"
+                        }
                     }
                 }
             }

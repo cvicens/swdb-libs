@@ -32,7 +32,6 @@ def call(pipeParams) {
 
         environment {
             PIPELINE_NAME = "${env.JOB_NAME}"
-            BITBUCKET_SSH_KEY = credentials("${params.CRED_BITBUCKET_SSH_KEY}")
         }
 
         options {
@@ -85,12 +84,15 @@ def call(pipeParams) {
                 when { not { branch "${params.RELEASE_BRANCH}" } }
 
                 steps {
-                    sh "./gradlew" +
-                            " -Dorg.ajoberstar.grgit.auth.ssh.private=${env.BITBUCKET_SSH_KEY}" +
-                            " -Dorg.ajoberstar.grgit.auth.session.config.StrictHostKeyChecking=no" +
-                            " -PskipRepoPublishing=true" +
-                            " --stacktrace" +
-                            " devSnapshot"
+                    script {
+                        sshagent(credentials: ["${pipeParams.CRED_BITBUCKET_SSH_KEY}"]) {
+                            sh "./gradlew" +
+                                    " -Dorg.ajoberstar.grgit.auth.session.config.StrictHostKeyChecking=no" +
+                                    " -PskipRepoPublishing=true" +
+                                    " --stacktrace" +
+                                    " devSnapshot"
+                        }
+                    }
                 }
             }
 
@@ -100,13 +102,14 @@ def call(pipeParams) {
                 steps {
                     script {
                         def versionParam = (params.OVERRIDE_VERSION == '') ? '' : " -Prelease.version=${params.OVERRIDE_VERSION}"
-                        sh "./gradlew" +
-                                " -Dorg.ajoberstar.grgit.auth.ssh.private=${env.BITBUCKET_SSH_KEY}" +
-                                " -Dorg.ajoberstar.grgit.auth.session.config.StrictHostKeyChecking=no" +
-                                " -PskipRepoPublishing=true" +
-                                " --stacktrace" +
-                                "${versionParam}" +
-                                " final"
+                        sshagent(credentials: ["${pipeParams.CRED_BITBUCKET_SSH_KEY}"]) {
+                            sh "./gradlew" +
+                                    " -Dorg.ajoberstar.grgit.auth.session.config.StrictHostKeyChecking=no" +
+                                    " -PskipRepoPublishing=true" +
+                                    " --stacktrace" +
+                                    "${versionParam}" +
+                                    " final"
+                        }
                     }
                 }
             }

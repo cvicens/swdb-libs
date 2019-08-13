@@ -8,7 +8,7 @@ buildscript {
         ivy { url cicdToolsRepo }
     }
     dependencies {
-        classpath ('com.swedbank.tools.gradle.plugin:swedb-release-plugin:0.1.5')
+        classpath ('com.swedbank.tools.gradle.plugin:swedb-release-plugin:0.1.6')
     }
 }
 
