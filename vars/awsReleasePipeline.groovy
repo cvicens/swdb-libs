@@ -159,12 +159,12 @@ def call(pipeParams) {
                                 utilsHelmPublishChartToRepo repoName: "${HELM_REPO_NAME}",
                                         chartPackagePath: "${packagePath}"
 
-                                def chartNamespace = "prod-${chartName}-${env.GIT_COMMIT}".substring(0,62)
+                                def chartNamespace = "production"
                                 utilsHelmInstallChart repoName: "${HELM_REPO_NAME}",
                                         chartName: "${chartName}",
                                         chartVersion: "${env.VERSION}",
                                         chartNamespace: "${chartNamespace}",
-                                        releaseName: "prod-${env.VERSION}"
+                                        releaseName: "prod-${chartName}"
                             }
                         }
                     }
