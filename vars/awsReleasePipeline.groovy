@@ -164,7 +164,7 @@ def call(pipeParams) {
                                         chartName: "${chartName}",
                                         chartVersion: "${env.VERSION}",
                                         chartNamespace: "${chartNamespace}",
-                                        releaseName: "prod-${chartName}"
+                                        releaseName: "${chartName}"
                             }
                         }
                     }
